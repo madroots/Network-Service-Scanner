@@ -116,6 +116,41 @@ clear
 echo
 echo -e "${RED}${BLINK}  ---------- SCANNING ----------${RESET}"
 }
+DEPENDENCY_CHECK() {
+# List of packages to check for and install if missing
+packages=("nmap" "awk")
+
+# Determine package manager
+if command -v apt-get &> /dev/null; then
+  package_manager="apt-get"
+elif command -v dnf &> /dev/null; then
+  package_manager="dnf"
+elif command -v yum &> /dev/null; then
+  package_manager="yum"
+elif command -v pacman &> /dev/null; then
+  package_manager="pacman"
+else
+  echo "Error: Unable to detect package manager"
+  exit 1
+fi
+
+# Check for and install missing packages
+for package in "${packages[@]}"; do
+  if ! command -v "$package" &> /dev/null; then
+    if [ "$package_manager" == "apt-get" ]; then
+      sudo apt-get install -y "$package"
+    elif [ "$package_manager" == "dnf" ]; then
+      sudo dnf install -y "$package"
+    elif [ "$package_manager" == "yum" ]; then
+      sudo yum install -y "$package"
+    elif [ "$package_manager" == "pacman" ]; then
+      sudo pacman -S "$package"
+    else
+      echo "Error: Unable to install $package"
+    fi
+  fi
+done
+}
 
 SELECT_INTERFACE() {
     LOADER

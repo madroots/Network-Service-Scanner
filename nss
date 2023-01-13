@@ -5,6 +5,7 @@ RESET='\033[0m'
 YELLOW='\033[1;33m'
 CYAN='\e[36m'
 GRAY='\033[0;37m'
+BROWN='\033[0;33m'
 WHITE='\033[1;37m'
 GRAY_R='\033[39m'
 WHITE_R='\033[39m'
@@ -114,11 +115,12 @@ echo
 LOADER2(){
 clear
 echo
-echo -e "${RED}${BLINK}  ---------- SCANNING ----------${RESET}"
+echo
+echo -e "${BROWN} - - - - - - - - - - - - - - - - - ${RESET}"
 }
 DEPENDENCY_CHECK() {
 # List of packages to check for and install if missing
-packages=("nmap" "awk")
+packages=("nmap" "awk" "pv")
 
 # Determine package manager
 if command -v apt-get &> /dev/null; then
@@ -185,9 +187,16 @@ INPUT_NETWORK() {
 }
 
 NMAP_RUN(){
-for str in "${ip_range[@]}"; do
-  nmap "$str" -Pn -p "$PORT_NO" | grep -B 4 -A 1 open
-done
+  for str in "${ip_range[@]}"; do
+    output=$(nmap "$str" -Pn -p "$PORT_NO" -oG - | grep 'open')
+    while read -r line; do
+        ip=$(echo $line | awk '{print $2}')
+        if echo $line | grep -q 'open'; then
+            port=$(echo $line | sed -n 's/.*Ports: \([0-9]*\/.*\)$/\1/p' | sed 's/\// /g')
+            printf "| %-15s %s $(tput setaf 6)$(tput bold)$(echo $port | awk '{print $1}') $(tput sgr0) $(tput setaf 2)$(echo $port | awk '{print $2}') $(tput sgr0) $(tput setaf 3)$(echo $port | awk '{print $3}')$(tput sgr0) |\n$(tput setaf 3)$(tput bold) - - - - - - - - - - - - - - - - $(tput sgr0)\n" $ip "|"
+        fi
+    done <<< "$output"
+  done
 }
 
 ASK_PORT() {
@@ -257,5 +266,6 @@ do
     esac
 done
 }
+DEPENDENCY_CHECK
 NETWORK_SELECT
 SELECTION

@@ -167,7 +167,6 @@ SELECT_INTERFACE() {
     done
     DISCOVER_NETWORK $interface_name
 }
-
 DISCOVER_NETWORK() {
   clear
   interface_name=$1

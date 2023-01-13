@@ -107,11 +107,23 @@ sleep 0.01; clear
 echo -e "${YELLOW}*******************************************${RESET}"
 sleep 0.01; clear
 echo -e "${GREEN}*******************************************************************${RESET}"
-echo -e "${GREEN}&                     NETWORK SERVICE SCANNER                     &${RESET}"
-echo -e "${GREEN}*******************************************************************${RESET}"
-echo -e "${YELLOW}------------------Find services on your network-------------------- ${RESET} ${BOLD}"
+sleep 0.01
 echo
 }
+
+HEADER() {
+clear
+echo -e "${GREEN}*******************************************************************${RESET}"
+echo -e "${GREEN}&                     NETWORK SERVICE SCANNER                     &${RESET}"
+echo -e "${GREEN}*******************************************************************${RESET}"
+echo -e "${GREEN}#                                                                 #${RESET}"
+echo -e "${GREEN}#    # IP Range: selected                                         #${RESET}"
+echo -e "${GREEN}#    # Settings: loaded                                           #${RESET}"
+echo -e "${GREEN}#                                             ${RESET} ${BROWN}  Made by madroots${RESET}${GREEN} #${RESET}"
+echo -e "${GREEN}*******************************************************************${RESET}"
+echo
+}
+
 LOADER2(){
 clear
 echo
@@ -192,7 +204,7 @@ NMAP_RUN(){
         ip=$(echo $line | awk '{print $2}')
         if echo $line | grep -q 'open'; then
             port=$(echo $line | sed -n 's/.*Ports: \([0-9]*\/.*\)$/\1/p' | sed 's/\// /g')
-            printf "| %-15s %s $(tput setaf 6)$(tput bold)$(echo $port | awk '{print $1}') $(tput sgr0) $(tput setaf 2)$(echo $port | awk '{print $2}') $(tput sgr0) $(tput setaf 3)$(echo $port | awk '{print $3}')$(tput sgr0) |\n$(tput setaf 3)$(tput bold) - - - - - - - - - - - - - - - - $(tput sgr0)\n" $ip "|"
+            printf "| %-15s %s $(tput setaf 6)$(tput bold)$(echo $port | awk '{print $1}') $(tput sgr0) $(tput setaf 2)$(echo $port | awk '{print $2}') $(tput sgr0) $(tput setaf 3)$(echo $port | awk '{print $3}')$(tput sgr0) |\n$(tput setaf 3)$(tput bold) - - - - - - - - - - - - - - - - -$(tput sgr0)\n" $ip "|"
         fi
     done <<< "$output"
   done
@@ -219,6 +231,7 @@ NETWORK_SELECT() {
 
 SELECTION(){
 LOADER
+HEADER
 PORT_NO=""
 PS3='Make a selection: '
 options=("SSH" "VNC" "HTTP" "HTTPS" "TOMCAT" "RTSP" "FTP" "TELNET" "SMTP" "IMAP" "POP3" "LOTUS" "DNS" "NTP" "PRINTERS" "CUSTOM PORT" "EXIT")

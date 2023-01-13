@@ -11,8 +11,8 @@ Features:
 
 - Fully Interactive
 - Network Interface selection
-- Autodiscovery of user network IP range
-- Custom IP range to scan
-- Most common services are listed
-- Custom service option (enter port to look for)
-- Easy to add, remove services from the list
+- Autodiscovery of user network IP range or custom IP range
+- Menu of most common services
+- Custom service option (enter custom port to look for)
+- Colored output for great readability
+- Easy to add and remove services from the menu

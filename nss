@@ -132,11 +132,11 @@ echo -e "${BROWN} - - - - - - - - - - - - - - - - - ${RESET}"
 }
 DEPENDENCY_CHECK() {
 # List of packages to check for and install if missing
-packages=("nmap" "awk" "pv")
+packages=("nmap" "awk")
 
 # Determine package manager
-if command -v apt-get &> /dev/null; then
-  package_manager="apt-get"
+if command -v apt &> /dev/null; then
+  package_manager="apt"
 elif command -v dnf &> /dev/null; then
   package_manager="dnf"
 elif command -v yum &> /dev/null; then
@@ -151,14 +151,14 @@ fi
 # Check for and install missing packages
 for package in "${packages[@]}"; do
   if ! command -v "$package" &> /dev/null; then
-    if [ "$package_manager" == "apt-get" ]; then
-      sudo apt-get install -y "$package"
+    if [ "$package_manager" == "apt" ]; then
+      echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo apt install -y "$package"
     elif [ "$package_manager" == "dnf" ]; then
-      sudo dnf install -y "$package"
+      echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo dnf install -y "$package"
     elif [ "$package_manager" == "yum" ]; then
-      sudo yum install -y "$package"
+      echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo yum install -y "$package"
     elif [ "$package_manager" == "pacman" ]; then
-      sudo pacman -S "$package"
+      echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo pacman -S "$package"
     else
       echo "Error: Unable to install $package"
     fi

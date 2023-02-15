@@ -19,96 +19,17 @@ export GRAY
 
 # LOADER
 LOADER() {
-clear
-echo -e "${YELLOW}*${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}**${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}***${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}****${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*****${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}******${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*******${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}********${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*********${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}**********${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}***********${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}**************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}***************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}****************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*****************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}******************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*******************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}********************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*********************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}**********************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}***********************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}**************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}***************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}****************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*****************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}******************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*******************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}********************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*********************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}**********************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}***********************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}************************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*************************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}**************************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}***************************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}****************************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*****************************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}******************************************${RESET}"
-sleep 0.01; clear
-echo -e "${YELLOW}*******************************************${RESET}"
-sleep 0.01; clear
-echo -e "${GREEN}*******************************************************************${RESET}"
-sleep 0.01
-echo
+  clear
+  chars="*"
+  for i in {1..50}; do
+    printf "${YELLOW}%s${RESET}\n" "$chars"
+    sleep 0.01
+    chars+="*"
+    clear
+  done
+  printf "${GREEN}%*s${RESET}\n" 65 "*******************************************************************"
+  sleep 0.01
+  echo
 }
 
 HEADER() {

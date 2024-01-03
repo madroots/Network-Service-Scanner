@@ -64,6 +64,8 @@ elif command -v yum &> /dev/null; then
   package_manager="yum"
 elif command -v pacman &> /dev/null; then
   package_manager="pacman"
+elif command -v zypper &> /dev/null; then
+  package_manager="zypper"
 else
   echo "Error: Unable to detect package manager"
   exit 1
@@ -80,6 +82,8 @@ for package in "${packages[@]}"; do
       echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo yum install -y "$package"
     elif [ "$package_manager" == "pacman" ]; then
       echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo pacman -S "$package"
+    elif [ "$package_manager" == "zypper" ]; then
+      echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo zypper in "$package"
     else
       echo "Error: Unable to install $package"
     fi

@@ -83,7 +83,7 @@ for package in "${packages[@]}"; do
     elif [ "$package_manager" == "pacman" ]; then
       echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo pacman -S "$package"
     elif [ "$package_manager" == "zypper" ]; then
-      echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo zypper in "$package"
+      echo -e "${RED} $package is missing. Installing..${RESET}" && echo && sudo zypper --non-interactive install "$package"
     else
       echo "Error: Unable to install $package"
     fi

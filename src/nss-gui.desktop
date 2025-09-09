@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Network Service Scanner
+Comment=Scan for open ports on your network
+Exec=python3 /home/master/gits/nss/nss-gui/main.py
+Icon=network-wired
+Terminal=false
+Type=Application
+Categories=Network;Security;

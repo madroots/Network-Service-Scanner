@@ -20,7 +20,11 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y desktop-file-utils libfuse2 nmap
+        sudo apt-get install -y desktop-file-utils libfuse2 nmap python3 python3-pip python3-gi python3-gi-cairo gir1.2-gtk-3.0 libgtk-3-0 libglib2.0-0 libgirepository-1.0-1
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install --user PyGObject
 
     - name: Download and extract Python AppImage
       run: |
@@ -39,11 +43,17 @@ jobs:
         # Copy application files
         cp -r main.py ui core AppDir/usr/bin/
         cp -r assets AppDir/usr/bin/
+        cp requirements.txt AppDir/usr/bin/
         chmod 755 AppDir/usr/bin/main.py
+        
+        # Install PyGObject in the AppDir
+        export PYTHONUSERBASE="$PWD/AppDir/usr"
+        pip3 install --user PyGObject
         
         # Create launcher script
         echo '#!/bin/bash' > AppDir/usr/bin/nss-gui
         echo 'DIR="$(dirname "$0")"' >> AppDir/usr/bin/nss-gui
+        echo 'export PYTHONPATH="$DIR:$PYTHONPATH"' >> AppDir/usr/bin/nss-gui
         echo '"$DIR/python3.9" "$DIR/main.py" "$@"' >> AppDir/usr/bin/nss-gui
         chmod 755 AppDir/usr/bin/nss-gui
         
@@ -76,6 +86,9 @@ jobs:
         # Create AppRun
         echo '#!/bin/bash' > AppDir/AppRun
         echo 'HERE="$(dirname "$(readlink -f "$0")")"' >> AppDir/AppRun
+        echo 'export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"' >> AppDir/AppRun
+        echo 'export GI_TYPELIB_PATH="$HERE/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"' >> AppDir/AppRun
+        echo 'export PYTHONPATH="$HERE/usr/lib/python3.9/site-packages:$HERE/usr/lib/python3/dist-packages:$PYTHONPATH"' >> AppDir/AppRun
         echo 'exec "$HERE/usr/bin/nss-gui" "$@"' >> AppDir/AppRun
         chmod 755 AppDir/AppRun
 

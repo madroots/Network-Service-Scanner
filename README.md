@@ -2,7 +2,7 @@
 
 A native Linux GUI application for scanning network services using nmap.
 
-![NSS GUI](screenshot.png)
+![NSS GUI](assets/nss-gui.svg)
 
 This is a complete rewrite of the original [Network-Service-Scanner](https://github.com/madroots/Network-Service-Scanner) bash script with a modern graphical interface.
 

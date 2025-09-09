@@ -38,11 +38,10 @@ cp /usr/lib/x86_64-linux-gnu/girepository-1.0/Gio-2.0.typelib AppDir/usr/lib/x86
 cp /usr/lib/x86_64-linux-gnu/girepository-1.0/GObject-2.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No GObject typelib"
 cp /usr/lib/x86_64-linux-gnu/girepository-1.0/GLib-2.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No GLib typelib"
 
-# Install Python dependencies in AppDir
-echo "Installing Python dependencies..."
-export PYTHONPATH="$PWD/AppDir/usr/lib/python3.12/site-packages:$PWD/AppDir/usr/lib/python3/dist-packages"
-mkdir -p AppDir/usr/lib/python3.12/site-packages
-pip3 install --target=AppDir/usr/lib/python3.12/site-packages PyGObject
+# Copy Python packages (use system packages)
+echo "Copying Python packages..."
+cp -r /usr/lib/python3/dist-packages/gi* AppDir/usr/lib/python3/dist-packages/ 2>/dev/null || echo "No gi package"
+cp -r /usr/lib/python3/dist-packages/cairo* AppDir/usr/lib/python3/dist-packages/ 2>/dev/null || echo "No cairo package"
 
 # Copy application files
 cp -r main.py ui core AppDir/usr/bin/
@@ -53,7 +52,7 @@ chmod 755 AppDir/usr/bin/main.py
 # Create launcher script
 echo '#!/bin/bash' > AppDir/usr/bin/nss-gui
 echo 'DIR="$(dirname "$0")"' >> AppDir/usr/bin/nss-gui
-echo 'export PYTHONPATH="$DIR/usr/lib/python3.12/site-packages:$DIR/usr/lib/python3/dist-packages:$PYTHONPATH"' >> AppDir/usr/bin/nss-gui
+echo 'export PYTHONPATH="$DIR/usr/lib/python3/dist-packages:$PYTHONPATH"' >> AppDir/usr/bin/nss-gui
 echo 'export LD_LIBRARY_PATH="$DIR/usr/lib:$DIR/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"' >> AppDir/usr/bin/nss-gui
 echo 'export GI_TYPELIB_PATH="$DIR/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"' >> AppDir/usr/bin/nss-gui
 echo 'export PYTHONDONTWRITEBYTECODE=1' >> AppDir/usr/bin/nss-gui
@@ -86,7 +85,7 @@ cat > AppDir/AppRun << 'EOF'
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "$0")")"
 export APPDIR="$HERE"
-export PYTHONPATH="$APPDIR/usr/lib/python3.12/site-packages:$APPDIR/usr/lib/python3/dist-packages:$PYTHONPATH"
+export PYTHONPATH="$APPDIR/usr/lib/python3/dist-packages:$PYTHONPATH"
 export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
 export GI_TYPELIB_PATH="$APPDIR/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"
 export PYTHONDONTWRITEBYTECODE=1

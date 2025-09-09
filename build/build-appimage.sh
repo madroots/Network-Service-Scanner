@@ -5,11 +5,9 @@
 set -e
 
 # Install dependencies if not already installed
-if ! command -v python3 &> /dev/null; then
-    echo "Installing system dependencies..."
-    sudo apt-get update
-    sudo apt-get install -y python3 python3-pip python3-gi python3-gi-cairo gir1.2-gtk-3.0 libgtk-3-0 libglib2.0-0 libgirepository-1.0-1 nmap
-fi
+echo "Installing system dependencies..."
+sudo apt-get update
+sudo apt-get install -y python3 python3-pip python3-gi python3-gi-cairo gir1.2-gtk-3.0 libgtk-3-0 libglib2.0-0 libgirepository-1.0-1 nmap patchelf desktop-file-utils libfuse2
 
 # Create build directory
 mkdir -p AppDir/usr/bin
@@ -17,33 +15,49 @@ mkdir -p AppDir/usr/lib
 mkdir -p AppDir/usr/share/applications
 mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
-# Download and extract Python AppImage
-echo "Downloading Python AppImage..."
-wget -O python.AppImage "https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.23-cp39-cp39-manylinux2014_x86_64.AppImage"
-chmod +x python.AppImage
-./python.AppImage --appimage-extract >/dev/null 2>&1
+# Copy system Python and GTK libraries to AppDir
+echo "Copying system libraries to AppDir..."
+cp -r /usr/bin/python3* AppDir/usr/bin/
+cp -r /usr/lib/python3* AppDir/usr/lib/
+cp -r /usr/lib/x86_64-linux-gnu/girepository-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No girepository dir"
+cp -r /usr/lib/x86_64-linux-gnu/glib-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No glib dir"
+cp -r /usr/lib/x86_64-linux-gnu/gio-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No gio dir"
+cp -r /usr/lib/x86_64-linux-gnu/libgtk-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No gtk lib"
+cp -r /usr/lib/x86_64-linux-gnu/libgdk-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No gdk lib"
+cp -r /usr/lib/x86_64-linux-gnu/libgobject-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No gobject lib"
+cp -r /usr/lib/x86_64-linux-gnu/libglib-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No glib lib"
+cp -r /usr/lib/x86_64-linux-gnu/libcairo-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No cairo lib"
+cp -r /usr/lib/x86_64-linux-gnu/libpango-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No pango lib"
+cp -r /usr/lib/x86_64-linux-gnu/libatk-* AppDir/usr/lib/x86_64-linux-gnu/ 2>/dev/null || echo "No atk lib"
 
-# Copy Python files
-cp -r squashfs-root/usr/bin/* AppDir/usr/bin/
-cp -r squashfs-root/usr/lib AppDir/usr/
-cp -r squashfs-root/usr/share AppDir/usr/ || echo "No share directory to copy"
-cp -r squashfs-root/opt AppDir/ || echo "No opt directory to copy"
-rm -f AppDir/AppRun
+# Copy GTK typelibs
+mkdir -p AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0
+cp /usr/lib/x86_64-linux-gnu/girepository-1.0/Gtk-3.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No Gtk typelib"
+cp /usr/lib/x86_64-linux-gnu/girepository-1.0/Gdk-3.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No Gdk typelib"
+cp /usr/lib/x86_64-linux-gnu/girepository-1.0/Gio-2.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No Gio typelib"
+cp /usr/lib/x86_64-linux-gnu/girepository-1.0/GObject-2.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No GObject typelib"
+cp /usr/lib/x86_64-linux-gnu/girepository-1.0/GLib-2.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No GLib typelib"
 
-# Install PyGObject in the AppDir
-export PYTHONUSERBASE="$PWD/AppDir/usr"
-pip3 install --user PyGObject
+# Install Python dependencies in AppDir
+echo "Installing Python dependencies..."
+export PYTHONPATH="$PWD/AppDir/usr/lib/python3.12/site-packages:$PWD/AppDir/usr/lib/python3/dist-packages"
+mkdir -p AppDir/usr/lib/python3.12/site-packages
+pip3 install --target=AppDir/usr/lib/python3.12/site-packages PyGObject
 
 # Copy application files
 cp -r main.py ui core AppDir/usr/bin/
 cp -r assets AppDir/usr/bin/
 cp requirements.txt AppDir/usr/bin/
+chmod 755 AppDir/usr/bin/main.py
 
 # Create launcher script
 echo '#!/bin/bash' > AppDir/usr/bin/nss-gui
 echo 'DIR="$(dirname "$0")"' >> AppDir/usr/bin/nss-gui
-echo 'export PYTHONPATH="$DIR:$PYTHONPATH"' >> AppDir/usr/bin/nss-gui
-echo '"$DIR/python3.9" "$DIR/main.py" "$@"' >> AppDir/usr/bin/nss-gui
+echo 'export PYTHONPATH="$DIR/usr/lib/python3.12/site-packages:$DIR/usr/lib/python3/dist-packages:$PYTHONPATH"' >> AppDir/usr/bin/nss-gui
+echo 'export LD_LIBRARY_PATH="$DIR/usr/lib:$DIR/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"' >> AppDir/usr/bin/nss-gui
+echo 'export GI_TYPELIB_PATH="$DIR/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"' >> AppDir/usr/bin/nss-gui
+echo 'export PYTHONDONTWRITEBYTECODE=1' >> AppDir/usr/bin/nss-gui
+echo '"$DIR/usr/bin/python3" "$DIR/usr/bin/main.py" "$@"' >> AppDir/usr/bin/nss-gui
 chmod 755 AppDir/usr/bin/nss-gui
 
 # Create desktop entry
@@ -71,10 +85,12 @@ fi
 cat > AppDir/AppRun << 'EOF'
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "$0")")"
-export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
-export GI_TYPELIB_PATH="$HERE/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"
-export PYTHONPATH="$HERE/usr/lib/python3.9/site-packages:$HERE/usr/lib/python3/dist-packages:$PYTHONPATH"
-exec "$HERE/usr/bin/nss-gui" "$@"
+export APPDIR="$HERE"
+export PYTHONPATH="$APPDIR/usr/lib/python3.12/site-packages:$APPDIR/usr/lib/python3/dist-packages:$PYTHONPATH"
+export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+export GI_TYPELIB_PATH="$APPDIR/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"
+export PYTHONDONTWRITEBYTECODE=1
+exec "$APPDIR/usr/bin/nss-gui" "$@"
 EOF
 
 chmod 755 AppDir/AppRun
@@ -86,6 +102,7 @@ if [ ! -f appimagetool ]; then
 fi
 
 # Create AppImage
+echo "Creating AppImage..."
 ARCH=x86_64 ./appimagetool AppDir
 
 # Rename AppImage

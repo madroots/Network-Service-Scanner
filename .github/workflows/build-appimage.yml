@@ -22,7 +22,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y desktop-file-utils libfuse2 nmap python3 python3-pip python3-gi python3-gi-cairo gir1.2-gtk-3.0 libgtk-3-0 libglib2.0-0 libgirepository-1.0-1 patchelf
 
-    - name: Set up Python AppImage environment
+    - name: Set up AppImage environment
       run: |
         # Create AppDir structure
         mkdir -p AppDir/usr/bin
@@ -51,13 +51,10 @@ jobs:
         cp /usr/lib/x86_64-linux-gnu/girepository-1.0/Gio-2.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No Gio typelib"
         cp /usr/lib/x86_64-linux-gnu/girepository-1.0/GObject-2.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No GObject typelib"
         cp /usr/lib/x86_64-linux-gnu/girepository-1.0/GLib-2.0.typelib AppDir/usr/lib/x86_64-linux-gnu/girepository-1.0/ 2>/dev/null || echo "No GLib typelib"
-
-    - name: Install Python dependencies in AppDir
-      run: |
-        # Install PyGObject and other dependencies directly into AppDir
-        export PYTHONPATH="$PWD/AppDir/usr/lib/python3.12/site-packages:$PWD/AppDir/usr/lib/python3/dist-packages"
-        mkdir -p AppDir/usr/lib/python3.12/site-packages
-        pip3 install --target=AppDir/usr/lib/python3.12/site-packages PyGObject
+        
+        # Copy Python packages (use system packages)
+        cp -r /usr/lib/python3/dist-packages/gi* AppDir/usr/lib/python3/dist-packages/ 2>/dev/null || echo "No gi package"
+        cp -r /usr/lib/python3/dist-packages/cairo* AppDir/usr/lib/python3/dist-packages/ 2>/dev/null || echo "No cairo package"
 
     - name: Bundle application
       run: |
@@ -70,7 +67,7 @@ jobs:
         # Create launcher script
         echo '#!/bin/bash' > AppDir/usr/bin/nss-gui
         echo 'DIR="$(dirname "$0")"' >> AppDir/usr/bin/nss-gui
-        echo 'export PYTHONPATH="$DIR/usr/lib/python3.12/site-packages:$DIR/usr/lib/python3/dist-packages:$PYTHONPATH"' >> AppDir/usr/bin/nss-gui
+        echo 'export PYTHONPATH="$DIR/usr/lib/python3/dist-packages:$PYTHONPATH"' >> AppDir/usr/bin/nss-gui
         echo 'export LD_LIBRARY_PATH="$DIR/usr/lib:$DIR/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"' >> AppDir/usr/bin/nss-gui
         echo 'export GI_TYPELIB_PATH="$DIR/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"' >> AppDir/usr/bin/nss-gui
         echo 'export PYTHONDONTWRITEBYTECODE=1' >> AppDir/usr/bin/nss-gui
@@ -107,7 +104,7 @@ jobs:
         echo '#!/bin/bash' > AppDir/AppRun
         echo 'HERE="$(dirname "$(readlink -f "$0")")"' >> AppDir/AppRun
         echo 'export APPDIR="$HERE"' >> AppDir/AppRun
-        echo 'export PYTHONPATH="$APPDIR/usr/lib/python3.12/site-packages:$APPDIR/usr/lib/python3/dist-packages:$PYTHONPATH"' >> AppDir/AppRun
+        echo 'export PYTHONPATH="$APPDIR/usr/lib/python3/dist-packages:$PYTHONPATH"' >> AppDir/AppRun
         echo 'export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"' >> AppDir/AppRun
         echo 'export GI_TYPELIB_PATH="$APPDIR/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"' >> AppDir/AppRun
         echo 'export PYTHONDONTWRITEBYTECODE=1' >> AppDir/AppRun

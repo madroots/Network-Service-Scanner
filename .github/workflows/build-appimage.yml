@@ -6,42 +6,115 @@ on:
   pull_request:
     branches: [ main ]
   release:
-    types: [ created ]
+    types: [ created, prereleased ]
+
+permissions:
+  contents: write
 
 jobs:
-  build:
+  build-appimage:
     runs-on: ubuntu-24.04
-
     steps:
     - uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
-        sudo apt update
-        sudo apt install -y python3 python3-pip python3-gi python3-gi-cairo gir1.2-gtk-3.0 nmap desktop-file-utils libgdk-pixbuf2.0-dev
+        sudo apt-get update
+        sudo apt-get install -y desktop-file-utils libfuse2 nmap
 
-    - name: Install Python dependencies
+    - name: Download and extract Python AppImage
       run: |
-        pip3 install -r requirements.txt
+        wget -O python.AppImage "https://github.com/niess/python-appimage/releases/download/python3.9/python3.9.23-cp39-cp39-manylinux2014_x86_64.AppImage"
+        chmod +x python.AppImage
+        ./python.AppImage --appimage-extract >/dev/null 2>&1
+        mkdir -p AppDir/usr/bin
+        cp -r squashfs-root/usr/bin/* AppDir/usr/bin/
+        cp -r squashfs-root/usr/lib AppDir/usr/
+        cp -r squashfs-root/usr/share AppDir/usr/ || echo "No share directory to copy"
+        cp -r squashfs-root/opt AppDir/ || echo "No opt directory to copy"
+        rm -f AppDir/AppRun
+
+    - name: Bundle application with Python
+      run: |
+        # Copy application files
+        cp -r main.py ui core AppDir/usr/bin/
+        cp -r assets AppDir/usr/bin/
+        chmod 755 AppDir/usr/bin/main.py
+        
+        # Create launcher script
+        echo '#!/bin/bash' > AppDir/usr/bin/nss-gui
+        echo 'DIR="$(dirname "$0")"' >> AppDir/usr/bin/nss-gui
+        echo '"$DIR/python3.9" "$DIR/main.py" "$@"' >> AppDir/usr/bin/nss-gui
+        chmod 755 AppDir/usr/bin/nss-gui
+        
+        # Create desktop entry
+        echo '[Desktop Entry]' > AppDir/nss-gui.desktop
+        echo 'Type=Application' >> AppDir/nss-gui.desktop
+        echo 'Name=Network Service Scanner' >> AppDir/nss-gui.desktop
+        echo 'Comment=Scan for open ports on your network' >> AppDir/nss-gui.desktop
+        echo 'Exec=nss-gui' >> AppDir/nss-gui.desktop
+        echo 'Icon=nss-gui' >> AppDir/nss-gui.desktop
+        echo 'Terminal=false' >> AppDir/nss-gui.desktop
+        echo 'Categories=Network;Security;' >> AppDir/nss-gui.desktop
+        chmod 644 AppDir/nss-gui.desktop
+        
+        # Create directories
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+        
+        # Copy desktop file
+        cp AppDir/nss-gui.desktop AppDir/usr/share/applications/
+        
+        # Copy icon
+        if [ -f "assets/nss-gui.svg" ]; then
+          cp assets/nss-gui.svg AppDir/nss-gui.svg
+          cp assets/nss-gui.svg AppDir/usr/share/icons/hicolor/256x256/apps/nss-gui.svg
+          chmod 644 AppDir/nss-gui.svg
+          chmod 644 AppDir/usr/share/icons/hicolor/256x256/apps/nss-gui.svg
+        fi
+        
+        # Create AppRun
+        echo '#!/bin/bash' > AppDir/AppRun
+        echo 'HERE="$(dirname "$(readlink -f "$0")")"' >> AppDir/AppRun
+        echo 'exec "$HERE/usr/bin/nss-gui" "$@"' >> AppDir/AppRun
+        chmod 755 AppDir/AppRun
+
+    - name: Download AppImageTool
+      run: |
+        wget -O appimagetool "https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage"
+        chmod +x appimagetool
 
     - name: Create AppImage
       run: |
-        chmod +x build/build-appimage.sh
-        ./build/build-appimage.sh
+        echo "Creating AppImage..."
+        ARCH=x86_64 ./appimagetool AppDir/
+        
+        if [ -f "Network_Service_Scanner-x86_64.AppImage" ]; then
+          mv Network_Service_Scanner-x86_64.AppImage Network-Service-Scanner-x86_64.AppImage
+        elif ls Network_Service_Scanner*.AppImage 1> /dev/null 2>&1; then
+          mv Network_Service_Scanner*.AppImage Network-Service-Scanner-x86_64.AppImage
+        elif ls *.AppImage 1> /dev/null 2>&1; then
+          mv *.AppImage Network-Service-Scanner-x86_64.AppImage
+        fi
+        
+        if [ ! -f "Network-Service-Scanner-x86_64.AppImage" ]; then
+          echo "Error: AppImage was not created successfully"
+          ls -la *.AppImage 2>/dev/null || echo "No AppImage files found"
+          exit 1
+        fi
+        
+        chmod +x Network-Service-Scanner-x86_64.AppImage
 
-    - name: Upload AppImage artifact
+    - name: Upload AppImage as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Network-Service-Scanner-AppImage
-        path: Network-Service-Scanner-*.AppImage
+        name: Network-Service-Scanner-appimage
+        path: Network-Service-Scanner-x86_64.AppImage
 
     - name: Upload AppImage to release
+      uses: softprops/action-gh-release@v1
       if: github.event_name == 'release'
-      uses: actions/upload-release-asset@v1
+      with:
+        files: Network-Service-Scanner-x86_64.AppImage
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: Network-Service-Scanner-*.AppImage
-        asset_name: Network-Service-Scanner-${{ github.event.release.tag_name }}-x86_64.AppImage
-        asset_content_type: application/octet-stream

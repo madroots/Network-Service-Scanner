@@ -4,6 +4,13 @@
 
 set -e
 
+# Install dependencies if not already installed
+if ! command -v python3 &> /dev/null; then
+    echo "Installing system dependencies..."
+    sudo apt-get update
+    sudo apt-get install -y python3 python3-pip python3-gi python3-gi-cairo gir1.2-gtk-3.0 libgtk-3-0 libglib2.0-0 libgirepository-1.0-1 nmap
+fi
+
 # Create build directory
 mkdir -p AppDir/usr/bin
 mkdir -p AppDir/usr/lib
@@ -23,13 +30,19 @@ cp -r squashfs-root/usr/share AppDir/usr/ || echo "No share directory to copy"
 cp -r squashfs-root/opt AppDir/ || echo "No opt directory to copy"
 rm -f AppDir/AppRun
 
+# Install PyGObject in the AppDir
+export PYTHONUSERBASE="$PWD/AppDir/usr"
+pip3 install --user PyGObject
+
 # Copy application files
 cp -r main.py ui core AppDir/usr/bin/
 cp -r assets AppDir/usr/bin/
+cp requirements.txt AppDir/usr/bin/
 
 # Create launcher script
 echo '#!/bin/bash' > AppDir/usr/bin/nss-gui
 echo 'DIR="$(dirname "$0")"' >> AppDir/usr/bin/nss-gui
+echo 'export PYTHONPATH="$DIR:$PYTHONPATH"' >> AppDir/usr/bin/nss-gui
 echo '"$DIR/python3.9" "$DIR/main.py" "$@"' >> AppDir/usr/bin/nss-gui
 chmod 755 AppDir/usr/bin/nss-gui
 
@@ -57,7 +70,10 @@ fi
 # Create AppRun script
 cat > AppDir/AppRun << 'EOF'
 #!/bin/bash
-HERE="$(dirname "$(readlink -f "$0")"
+HERE="$(dirname "$(readlink -f "$0")")"
+export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+export GI_TYPELIB_PATH="$HERE/usr/lib/x86_64-linux-gnu/girepository-1.0:$GI_TYPELIB_PATH"
+export PYTHONPATH="$HERE/usr/lib/python3.9/site-packages:$HERE/usr/lib/python3/dist-packages:$PYTHONPATH"
 exec "$HERE/usr/bin/nss-gui" "$@"
 EOF
 
